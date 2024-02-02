@@ -24,7 +24,6 @@ $divider-gradient: linear-gradient(
   position: absolute;
   top: 0;
   transform: rotate(45deg) translateY(-50%);
-  left: var(leftPosition);
 }
 
 %dropdown-wrapper {
@@ -162,6 +161,7 @@ section {
     }
     &::before {
       @extend %notch;
+      left: var(--left-position);
     }
   }
 }
@@ -177,6 +177,10 @@ section {
     border-radius: $border-radius-main;
     padding: 20px 22px;
     border-style: solid;
+    background: url(/search.svg) no-repeat right;
+    background-size: 24px;
+    background-position: calc(100% - 22px);
+    background-color: $color-white;
   }
   input:focus {
     outline: none;
@@ -189,9 +193,36 @@ section {
     background-color: #fff;
     font-size: 12px;
     padding-inline: 9px;
+    // visibility: hidden;
+    opacity: 0;
+    transition-duration: 0.8s;
   }
   &__dropdown {
     @extend %dropdown-wrapper;
+    ul {
+      width: 100%;
+      margin: 0;
+      overflow-y: auto;
+      flex-direction: column;
+      font-size: 13px;
+    }
+    li {
+      display: flex;
+      justify-content: space-between;
+      &:not(:last-child) {
+        padding-block: 18px;
+        border-bottom: 1px solid $color-main-light;
+      }
+      &:last-child {
+        padding-top: 18px;
+      }
+      &:first-child {
+        padding-top: 0;
+      }
+      span {
+        font-weight: 500;
+      }
+    }
     &::before {
       @extend %notch;
       left: 20px;
@@ -199,5 +230,13 @@ section {
     &--show {
       display: flex;
     }
+  }
+  .load-icon {
+    position: absolute;
+    right: 55px;
+    top: 20px;
+    background: url(/spinner.svg) center center no-repeat;
+    width: 20px;
+    height: 20px;
   }
 }
