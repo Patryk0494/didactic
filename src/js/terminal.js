@@ -1,17 +1,50 @@
+import { getSessionStorage, setSessionStorage } from './utils';
+const COMMAND_HISTORY = 'commandHistory'
 const terminalInputElement = document.querySelector('#terminal_input');
 const logsElement = document.querySelector('.terminal-window__logs');
+const KEYS = {
+  ARROW_UP: 'ArrowUp',
+  ARROW_DOWN: 'ArrowDown',
+}
 
+let historyIndex = getSessionStorage(COMMAND_HISTORY)?.length || 0;
 const getRandomQuote = async () => {
-  return await fetch('https://dummyjson.com/quotes/random')
+  
+  return fetch('https://dummyjson.com/quotes/random')
    .then(res => res.json())
    .then(({quote}) => {
-    console.log(quote);
      return quote;
    })
    .catch(err => {
      console.log(err);
-   });
+    });
 }
+  
+document.addEventListener('keydown', (e) => {
+  console.log(e)
+  const commandHistory = getSessionStorage(COMMAND_HISTORY) || [];
+
+  if (e.key === KEYS.ARROW_UP) {
+    if(historyIndex > 0) {
+      --historyIndex;
+      terminalInputElement.value = commandHistory.at(historyIndex)
+    }
+  }
+  if (e.key === KEYS.ARROW_DOWN) {
+    console.log(historyIndex, commandHistory.length)
+    if (historyIndex < commandHistory.length - 1) {
+      ++historyIndex;
+      terminalInputElement.value = commandHistory.at(historyIndex)
+    }
+  }
+})
+
+const addToHistory = (command) => {
+  const commandHistory = getSessionStorage(COMMAND_HISTORY) || [];
+  console.log(commandHistory);
+  setSessionStorage(COMMAND_HISTORY, [...commandHistory, command]);
+  historyIndex = commandHistory.length + 1;
+};
 
 const CUSTOM_COMMANDS = {
   hello: {
@@ -23,28 +56,33 @@ const commands = {
   ...CUSTOM_COMMANDS,
   clear: {
     msg: () => {
-      console.log('clear terminal');
       return 'clear terminal';
     },
+    description: 'Clear terminal'
   },
   help: {
     msg: () => {
-      console.log(Object.keys(commands));
-      return Object.keys(commands).join(', ');
+      const helper = Object.entries(commands).map(([key, {description}]) => { 
+        const commandDesc = description ? key + ' - ' + description : key
+        return `<br> ${commandDesc}`;
+      });
+      console.log(helper);
+      return helper.join(' ');
     },
+    description: 'Display all available commands'
   },
   quote: {
     msg: async () => {
-      console.log('random quote');
-      const { quote } = await getRandomQuote();
-      return 'random quote' + quote;
+      const quote = await getRandomQuote();
+      return quote;
     },
+    description: 'Display random quote'
   },
   double: {
     msg: function () {
-     console.log('X 2', this.param, this.param * 2);
-     return this.param * 2;
+     return this.param ? this.param * 2 : 'Enter a value';
     },
+    description: 'Double enteret number'
   },
 };
 
@@ -52,41 +90,50 @@ function isNumeric(num) {
   return !isNaN(num);
 }
 
-terminalInputElement.addEventListener('change', function (e) {
-  const log = document.createElement('span'); 
+terminalInputElement.addEventListener('change', async function (e) {
+  const terminalLog = document.createElement('span');
+  const userLog = document.createElement('span');
+  let terminalMessage;
   const { value } = e.target;
-  console.log(value);
+  addToHistory(value);
+  userLog.innerHTML = `you: ${value}`;
+  logsElement.appendChild(userLog)
   const commandWithParams= value.split(' ');
   const [command, param] = commandWithParams;
+  if(value ==='clear') {
+    logsElement.innerHTML = '';
+    terminalInputElement.value = '';
+    return;
+  }
   if(commandWithParams.length > 2) {
     if(command === 'double') {
-     log.innerHTML = `Command is too long. Try '${command} ${param}'`;
+     terminalMessage = `Too much params. Try '${command} ${param}'`;
     } else {
-     log.innerHTML = 'Command is to long';
+     terminalMessage = 'Too much params.';
     }
   }
   else if (commandWithParams.length <= 2 && command === 'double') {
     if (isNumeric(param)) {
-      log.innerHTML = commands[command].msg.call({param: +param});
+      terminalMessage = commands[command].msg.call({param: +param});
     } else {
-      throw new Error(`${param} Is not a number`);
+      terminalMessage = `${param} is not a number`;
+      // throw new Error(`${param} is not a number`);
     }
   } else {
     const message = commands?.[value]?.msg;
     if (typeof message === 'string') {
-      log.innerHTML = message
-      // return console.log(message);
+      terminalMessage = message
     } else if (typeof message === 'function') {
-      log.innerHTML = message.call(value);
-
-      // return console.log(message.call(value));
+      terminalMessage = await message.call(value);
     } else {
-      log.innerHTML = 'Command not exist';
-     // return console.error('Command not exist')
+      terminalMessage = 'Command not exist';
     }
   }
-  logsElement.appendChild(log)
-  logsElement.scrollTo(0, logsElement.scrollHeight);
+  terminalLog.innerHTML = `terminal: ${terminalMessage}`;
+  logsElement.appendChild(terminalLog)
+  if (logsElement.scrollHeight > logsElement.clientHeight) {
+    logsElement.scrollTo(0, logsElement.scrollHeight);
+  }
 
-  return (terminalInputElement.value = '');
+  return terminalInputElement.value = '';
 });
