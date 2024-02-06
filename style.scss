@@ -48,8 +48,8 @@ $divider-gradient: linear-gradient(
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #fff;
+  color: $color-white;
+  background-color: $color-white;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -249,9 +249,21 @@ section {
 
 /**** terminal ****/
 
+.terminal {
+  display: flex;
+  flex-direction: column;
+}
+
 .terminal-window {
-  width: 60%;
-  height: 45%;
+  width: 100%;
+  height: 90%;
+  @media (min-width: 768px) {
+    width: 60%;
+    height: 45%;
+    &__logs {
+      gap: 6px;
+    }
+  }
   border-radius: calc($border-radius-main * 2);
   background-color: $color-terminal-bg;
   &__controls {
@@ -311,5 +323,18 @@ section {
     width: 100%;
     height: 40px;
     padding-inline: 14px;
+  }
+}
+
+.terminal-hints {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  &__pill {
+    border: none;
+    background-color: $color-terminal-secondary;
+    border-radius: $border-radius-main * 2;
+    padding: 4px 8px;
+    color: $color-white;
   }
 }
